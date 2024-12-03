@@ -18,12 +18,13 @@ import java.util.Properties;
 @Repository(value = "db")
 public class PlayerRepositoryDB implements IPlayerRepository {
     SessionFactory sessionFactory;
+
     public PlayerRepositoryDB() {
         Properties properties = new Properties();
 
-        properties.put(Environment.DRIVER, "com.mysql.cj.jdbc.Driver");
-        properties.put(Environment.URL, "jdbc:mysql://localhost:3306/rpg");
         properties.put(Environment.DIALECT, "org.hibernate.dialect.MySQLDialect");
+        properties.put(Environment.DRIVER, "com.p6spy.engine.spy.P6SpyDriver");
+        properties.put(Environment.URL, "jdbc:p6spy:mysql://localhost:3306/rpg");
         properties.put(Environment.USER, "root");
         properties.put(Environment.PASS, "12345");
         properties.put(Environment.HBM2DDL_AUTO, "update");
@@ -38,7 +39,7 @@ public class PlayerRepositoryDB implements IPlayerRepository {
     public List<Player> getAll(int pageNumber, int pageSize) {
     try(Session session = sessionFactory.openSession()){
         NativeQuery<Player> query = session.createNativeQuery("SELECT * FROM rpg.player", Player.class);
-        query.setFirstResult((pageNumber - 1) * pageSize);
+        query.setFirstResult(pageNumber * pageSize);
         query.setMaxResults(pageSize);
         return query.list();
     }catch (Exception e){
@@ -49,8 +50,8 @@ public class PlayerRepositoryDB implements IPlayerRepository {
     @Override
     public int getAllCount() {
         try(Session session = sessionFactory.openSession()){
-            Query<Long> query = session.createNativeQuery("SELECT COUNT(*) FROM rpg.player", Long.class);
-            return query.list().size();
+            Query<Long> query = session.createNamedQuery("player_getAllCount", Long.class);
+            return Math.toIntExact(query.uniqueResult());
         }
 
     }
